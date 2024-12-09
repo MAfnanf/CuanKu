@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CuanKu - Catatan Keuangan</title>
+    <link rel="stylesheet" href="styles-catatan.css">
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar">
+            <div class="logo">
+                <img src="../images/Logo.png" alt="CuanKu Logo">
+                <h1>CuanKu</h1>
+            </div>
+            <nav>
+                <a href="../index.html">
+                    <img src="../images/icon_rumah.png" alt="Dashboard Icon">
+                    Dashboard
+                </a>
+                <a href="catatan.html" class="active">
+                    <img src="../images/icon_catatan.png" alt="Catatan Icon">
+                    Catatan
+                </a>
+                <a href="#">
+                    <img src="../images/icon_laporan.png" alt="Laporan Icon">
+                    Laporan
+                </a>
+                <a href="#">
+                    <img src="../images/uil_setting.png" alt="Pengaturan Icon">
+                    Pengaturan
+                </a>
+            </nav>
+        </div>
+        <main>
+            <div class="header">
+                <h1>Catat Keuangan!</h1>
+                <div class="profile">
+                    <img src="../images/mdi_user.png" alt="Profile Icon">
+                    <span>Profil</span>
+                </div>
+            </div>
+            <div class="content">
+                <div class="transaction-type-wrapper">
+                    <select id="transactionType" class="transaction-select">
+                        <option value="Pengeluaran">Pengeluaran</option>
+                        <option value="Pemasukan">Pemasukan</option>
+                    </select>
+                </div>
+
+                <div class="form-container">
+                    <div class="input-group">
+                        <label>Jumlah Transaksi</label>
+                        <div class="amount-input">
+                            <span class="currency">Rp</span>
+                            <input type="number" id="amount" placeholder="0">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Kategori Transaksi</label>
+                        <div id="categoryIcons" class="category-icons"></div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Detil Transaksi</label>
+                        <textarea id="details" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <button id="submitTransaction" class="submit-btn">Catat</button>
+            </div>
+        </main>
+    </div>
+    <script src="script-catatan.js"></script>
+</body>
+</html>

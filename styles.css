@@ -25,7 +25,6 @@ body, html {
     width: 40px;
     height: auto;
     margin-right: 10px;
-    object-fit: contain;
 }
 
 .logo h1 {
