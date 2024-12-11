@@ -139,33 +139,6 @@ header {
     text-decoration: none;
 }
 
-.back-button {
-    display: flex;
-    align-items: center;
-    text-decoration: none;
-    color: #000;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-}
-
-.back-button img {
-    width: 30px;
-    height: 30px;
-    margin-right: 8px;
-}
-
-.back-button span {
-    margin-left: -1px;
-    font-size: 16px;
-}
-
-.back-button div {
-    font-size: 1rem;
-    color: #000;
-}
-
 .dashboard {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -196,15 +169,6 @@ header {
     overflow-y: auto;
 }
 
-.transaction-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-}
-
 .transaction-item img {
     width: 24px;
     height: 24px;
@@ -221,4 +185,77 @@ header {
 
 .transaction-item .amount.negative {
     color: red;
+}
+
+.delete-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.transaction-item {
+    position: relative;
+    padding: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.transaction-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.transaction-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.delete-btn {
+    position: absolute;
+    right: -10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    opacity: 0;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.delete-btn img {
+    width: 12px;
+    height: 12px;
+}
+
+.transaction-item:hover .delete-btn {
+    opacity: 1;
+    right: 0;
+}
+
+.delete-btn:hover {
+    background-color: #ff3333;
+}
+
+/* Adjust the amount spacing to make room for the delete button */
+.transaction-item .amount {
+    margin-right: 60px; /* Make space for the delete button */
 }

@@ -1,36 +1,33 @@
+import { db } from "./firebaseConfig.js";
+import { collection, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js";
+
 document.addEventListener('DOMContentLoaded', () => {
     const username = localStorage.getItem('username');
     const welcomeText = document.querySelector('header h2');
     const profileButton = document.querySelector('.profile');
     const logoutDropdown = document.querySelector('.logout-dropdown');
-    const logoutButton = document.getElementById('logout'); // Ambil tombol logout
-    
-    // Menampilkan pesan selamat datang atau default
+    const logoutButton = document.getElementById('logout');
+    const transactionList = document.getElementById('transactionList');
+    const balanceElement = document.querySelector('.balance .amount');
+
     if (username) {
         welcomeText.textContent = `Selamat Datang, ${username}!`;
     } else {
         welcomeText.textContent = 'Selamat Datang, User!';
     }
 
-    // Cek status login dan buat event listener
     profileButton.addEventListener('click', (e) => {
         if (username) {
-            // Jika user sudah login, tampilkan dropdown logout
             logoutDropdown.classList.toggle('show');
         } else {
-            // Jika tidak ada akun yang login, redirect ke halaman login
             window.location.href = 'Login/login.html';
         }
     });
 
-    // Fungsi logout
     logoutButton.addEventListener('click', () => {
-        // Hapus data user dari localStorage
         localStorage.removeItem('isLoggedIn');
         localStorage.removeItem('username');
-        
-        // Redirect ke halaman login setelah logout
-        window.location.href = 'Login/login.html'; // Ganti dengan path yang sesuai
+        window.location.href = 'Login/login.html';
     });
 
     // Expense chart
@@ -50,52 +47,82 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Transaction data
-    const transactions = [
-        {
-            date: '4 Des',
-            day: 'Rabu',
-            items: [
-                { description: 'Steak + Milkshake', amount: -400000, icon: 'icon_makanan.png' },
-                { description: 'Investasi Bibit', amount: -96000, icon: 'icon_invest.png' }
-            ]
-        },
-        {
-            date: '3 Des',
-            day: 'Selasa',
-            items: [
-                { description: 'Beli React Course', amount: -100000, icon: 'icon_edu.png' }
-            ]
-        },
-        {
-            date: '2 Des',
-            day: 'Senin',
-            items: [
-                { description: 'Uang Bulanan', amount: 1000000, icon: 'icon_income.png' }
-            ]
-        }
-    ];
-
-    // Populate transaction list
-    const transactionList = document.getElementById('transactionList');
-    transactions.forEach(transaction => {
-        const transactionDate = document.createElement('div');
-        transactionDate.innerHTML = `<strong>${transaction.date} ${transaction.day}</strong>`;
-        transactionList.appendChild(transactionDate);
-
-        transaction.items.forEach(item => {
+    function renderTransactions(transactions) {
+        let totalBalance = 0;
+        transactionList.innerHTML = ''; // Clear the list to avoid duplication
+    
+        transactions.forEach((transaction) => {
+            const amount = transaction.amount;
+            const type = transaction.type;
+    
+            totalBalance += type === 'Pemasukan' ? amount : -amount;
+    
             const transactionItem = document.createElement('div');
             transactionItem.className = 'transaction-item';
             transactionItem.innerHTML = `
-                <div>
-                    <img src="images/${item.icon}" alt="${item.description}">
-                    ${item.description}
+                <div class="transaction-content">
+                    <div class="transaction-info">
+                        <img src="images/${getIconForCategory(transaction.category)}" alt="${transaction.category}">
+                        ${transaction.details} (${transaction.category})
+                    </div>
+                    <span class="amount ${type === 'Pemasukan' ? 'positive' : 'negative'}">
+                        Rp ${Math.abs(amount).toLocaleString()}
+                    </span>
+                    <button class="delete-btn" data-id="${transaction.id}">
+                        <img src="images/tabler-trash.png" alt="Delete"> Hapus
+                    </button>
                 </div>
-                <span class="amount ${item.amount > 0 ? 'positive' : 'negative'}">
-                    ${item.amount.toLocaleString()}
-                </span>
             `;
+    
+            const deleteBtn = transactionItem.querySelector('.delete-btn');
+            deleteBtn.addEventListener('click', (e) => deleteTransaction(e, transaction.id));
+    
             transactionList.appendChild(transactionItem);
         });
+    
+        balanceElement.textContent = `Rp ${totalBalance.toLocaleString()}`;
+    }
+
+    function getIconForCategory(category) {
+        const iconMap = {
+            'food': 'food-icon.png',
+            'invest': 'invest-icon.png',
+            'education': 'edu-icon.png',
+            'income': 'income-icon.png',
+            'beauty': 'beauty-icon.png',
+            'shopping': 'shopping-icon.png',
+            'repair': 'repair-icon.png',
+            'travelling': 'travelling-icon.png',
+            'investments': 'investment-icon.png',
+            'saving': 'saving-icon.png',
+            'part-time': 'part-time-icon.png'
+        };
+        return iconMap[category] || 'other-icon.png';
+    }
+
+    async function deleteTransaction(e, id) {
+        e.stopPropagation();
+        if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
+            try {
+                await deleteDoc(doc(db, 'transactions', id));
+                // No need to call fetchTransactions here as the listener will update the list
+            } catch (error) {
+                console.error("Error deleting transaction:", error);
+                alert('Gagal menghapus transaksi.');
+            }
+        }
+    }
+
+    // Set up a real-time listener for transactions
+    const unsubscribe = onSnapshot(collection(db, 'transactions'), (snapshot) => {
+        const transactions = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+        }));
+        renderTransactions(transactions);
     });
+
+    // Clean up the listener when the page is unloaded
+    window.addEventListener('unload', () => unsubscribe());
 });
+

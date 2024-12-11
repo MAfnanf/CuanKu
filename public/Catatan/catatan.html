@@ -33,13 +33,13 @@
             </nav>
         </div>
         <main>
-            <div class="header">
+            <header>
                 <h1>Catat Keuangan!</h1>
-                <div class="profile">
+                <div class="profile-button">
                     <img src="../images/mdi_user.png" alt="Profile Icon">
                     <span>Profil</span>
                 </div>
-            </div>
+            </header>
             <div class="content">
                 <div class="transaction-type-wrapper">
                     <select id="transactionType" class="transaction-select">
@@ -59,7 +59,9 @@
 
                     <div class="input-group">
                         <label>Kategori Transaksi</label>
-                        <div id="categoryIcons" class="category-icons"></div>
+                        <div id="categoryIcons" class="category-icons">
+                            <!-- Category icons will be dynamically added here -->
+                        </div>
                     </div>
 
                     <div class="input-group">
@@ -72,6 +74,6 @@
             </div>
         </main>
     </div>
-    <script src="script-catatan.js"></script>
+    <script src="script-catatan.js" type = "module"></script>
 </body>
 </html>
