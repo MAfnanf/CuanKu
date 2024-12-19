@@ -1,5 +1,5 @@
 import { db } from "./firebaseConfig.js";
-import { collection, getDocs, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js";
+import { collection, deleteDoc, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.20.0/firebase-firestore.js";
 
 document.addEventListener('DOMContentLoaded', () => {
     const username = localStorage.getItem('username');
@@ -30,40 +30,83 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'Login/login.html';
     });
 
-    // Expense chart
-    const ctx = document.getElementById('expenseChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: ['Food', 'Study', 'Invest'],
-            datasets: [{
-                data: [400, 100, 96],
-                backgroundColor: ['#36D7B7', '#FF9F9F', '#9B89FF']
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false
+    // Global variable for chart instance
+    let expenseChart;
+
+    // Function to calculate the chart data dynamically
+    function calculateChartData(transactions) {
+        const categoryData = {};
+
+        transactions.forEach(transaction => {
+            const amount = transaction.amount;
+            const category = transaction.category.toLowerCase();
+
+            if (!categoryData[category]) {
+                categoryData[category] = 0;
+            }
+
+            if (transaction.type === 'Pemasukan') {
+                categoryData[category] += amount; // Pemasukan
+            } else {
+                categoryData[category] -= amount; // Pengeluaran
+            }
+        });
+
+        // Return the formatted data for the chart
+        const labels = Object.keys(categoryData);
+        const data = Object.values(categoryData).map(value => Math.abs(value));
+        return { labels, data };
+    }
+
+    // Function to render or update the chart
+    function renderChart(transactions) {
+        const { labels, data } = calculateChartData(transactions);
+
+        const colors = labels.map(() => `#${Math.floor(Math.random() * 16777215).toString(16)}`);
+
+        if (expenseChart) {
+            // Update the chart if it already exists
+            expenseChart.data.labels = labels;
+            expenseChart.data.datasets[0].data = data;
+            expenseChart.data.datasets[0].backgroundColor = colors;
+            expenseChart.update();
+        } else {
+            // Create a new chart
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
         }
-    });
+    }
 
     function renderTransactions(transactions) {
         let totalBalance = 0;
         transactionList.innerHTML = ''; // Clear the list to avoid duplication
-    
-        transactions.forEach((transaction) => {
+
+        transactions.reverse().forEach((transaction) => {
             const amount = transaction.amount;
             const type = transaction.type;
-    
+
             totalBalance += type === 'Pemasukan' ? amount : -amount;
-    
+
             const transactionItem = document.createElement('div');
             transactionItem.className = 'transaction-item';
             transactionItem.innerHTML = `
                 <div class="transaction-content">
                     <div class="transaction-info">
                         <img src="images/${getIconForCategory(transaction.category)}" alt="${transaction.category}">
-                        ${transaction.details} (${transaction.category})
+                        ${transaction.details} (${transaction.category}) - Sumber: ${transaction.source || 'Unknown'}
                     </div>
                     <span class="amount ${type === 'Pemasukan' ? 'positive' : 'negative'}">
                         Rp ${Math.abs(amount).toLocaleString()}
@@ -73,13 +116,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     </button>
                 </div>
             `;
-    
+
             const deleteBtn = transactionItem.querySelector('.delete-btn');
             deleteBtn.addEventListener('click', (e) => deleteTransaction(e, transaction.id));
-    
+
             transactionList.appendChild(transactionItem);
         });
-    
+
         balanceElement.textContent = `Rp ${totalBalance.toLocaleString()}`;
     }
 
@@ -97,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'saving': 'saving-icon.png',
             'part-time': 'part-time-icon.png'
         };
-        return iconMap[category] || 'other-icon.png';
+        return iconMap[category.toLowerCase()] || 'other-icon.png';
     }
 
     async function deleteTransaction(e, id) {
@@ -105,7 +148,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) {
             try {
                 await deleteDoc(doc(db, 'transactions', id));
-                // No need to call fetchTransactions here as the listener will update the list
+                // The onSnapshot listener will update the UI automatically
             } catch (error) {
                 console.error("Error deleting transaction:", error);
                 alert('Gagal menghapus transaksi.');
@@ -113,16 +156,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Set up a real-time listener for transactions
+    // Fetch transactions and render chart
     const unsubscribe = onSnapshot(collection(db, 'transactions'), (snapshot) => {
         const transactions = snapshot.docs.map(doc => ({
             id: doc.id,
             ...doc.data()
         }));
-        renderTransactions(transactions);
+
+        renderTransactions(transactions); // Update transaction list
+        renderChart(transactions); // Update chart with dynamic data
     });
-
-    // Clean up the listener when the page is unloaded
-    window.addEventListener('unload', () => unsubscribe());
 });
-

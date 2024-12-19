@@ -25,18 +25,22 @@ const incomeCategories = [
 let selectedCategory = null;
 
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('Document loaded');
     const transactionType = document.getElementById('transactionType');
     const categoryIcons = document.getElementById('categoryIcons');
     const submitButton = document.getElementById('submitTransaction');
 
     // Initial render of categories
+    console.log('Rendering initial categories (expenseCategories)');
     renderCategories(expenseCategories);
 
     // Handle transaction type change
     transactionType.addEventListener('change', (e) => {
+        console.log('Transaction type changed:', e.target.value);
         const categories = e.target.value === 'Pengeluaran' ? expenseCategories : incomeCategories;
         renderCategories(categories);
         selectedCategory = null;
+        console.log('Selected category reset to null');
     });
 
     // Handle form submission
@@ -44,14 +48,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function renderCategories(categories) {
+    console.log('Rendering categories:', categories);
     const categoryIcons = document.getElementById('categoryIcons');
     categoryIcons.innerHTML = '';
 
     categories.forEach(category => {
+        console.log('Adding category:', category);
         const categoryElement = document.createElement('div');
         categoryElement.className = 'category-item';
         categoryElement.dataset.category = category.id;
-        
+
         categoryElement.innerHTML = `
             <img src="${category.icon}" alt="${category.name}">
             <span>${category.name}</span>
@@ -63,30 +69,41 @@ function renderCategories(categories) {
 }
 
 function selectCategory(element) {
+    console.log('Category selected:', element.dataset.category);
     // Remove selection from previously selected category
     const previouslySelected = document.querySelector('.category-item.selected');
     if (previouslySelected) {
         previouslySelected.classList.remove('selected');
+        console.log('Removed selection from previous category:', previouslySelected.dataset.category);
     }
 
     // Add selection to clicked category
     element.classList.add('selected');
     selectedCategory = element.dataset.category;
+    console.log('New selected category:', selectedCategory);
 }
 
 async function handleSubmit() {
+    console.log('Submit button clicked');
     const amount = document.getElementById('amount').value;
     const details = document.getElementById('details').value;
     const type = document.getElementById('transactionType').value;
 
-    if (isSubmitting) return; // Prevent further calls while a submission is in progress
+    console.log('Form inputs:', { amount, details, type, selectedCategory });
+
+    if (isSubmitting) {
+        console.log('Submission in progress. Aborting.');
+        return;
+    }
 
     if (!amount || !details || !selectedCategory) {
+        console.error('Validation failed: Missing fields');
         alert('Please fill in all fields and select a category');
         return;
     }
 
     isSubmitting = true; // Only set this after validating inputs
+    console.log('Starting submission');
 
     const transaction = {
         type,
@@ -96,9 +113,12 @@ async function handleSubmit() {
         date: new Date().toISOString()
     };
 
+    console.log('Transaction object to save:', transaction);
+
     try {
         // Save data to Firestore
-        await addDoc(collection(db, 'transactions'), transaction);
+        const docRef = await addDoc(collection(db, 'transactions'), transaction);
+        console.log('Transaction saved with ID:', docRef.id);
         alert('Transaction saved successfully!');
 
         // Reset form
@@ -107,12 +127,14 @@ async function handleSubmit() {
         const selectedCategoryElement = document.querySelector('.category-item.selected');
         if (selectedCategoryElement) {
             selectedCategoryElement.classList.remove('selected');
+            console.log('Cleared selection from category');
         }
         selectedCategory = null;
     } catch (error) {
-        console.error("Error saving transaction: ", error);
+        console.error('Error saving transaction:', error);
         alert('Failed to save transaction.');
     } finally {
         isSubmitting = false; // Always reset the flag
+        console.log('Submission completed');
     }
 }
